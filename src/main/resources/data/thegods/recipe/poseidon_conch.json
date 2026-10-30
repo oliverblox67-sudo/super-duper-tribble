@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NHN",
+    "NTN",
+    "NNN"
+  ],
+  "key": {
+    "N": { "item": "minecraft:nautilus_shell" },
+    "H": { "item": "minecraft:heart_of_the_sea" },
+    "T": { "item": "minecraft:trident" }
+  },
+  "result": {
+    "id": "thegods:poseidon_conch",
+    "count": 1
+  }
+}
