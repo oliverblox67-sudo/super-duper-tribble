@@ -117,6 +117,11 @@ public final class GodManager {
         GodData data = data(player);
         God god = data.god();
         if (god == null || player.isSpectator()) return;
+        // In groppa al Titano, R comanda il Titano
+        if (player.getVehicle() instanceof com.thegods.entity.WaterGolemEntity golem && golem.isOwnedBy(player)) {
+            golem.riderAttack(player);
+            return;
+        }
         if (!data.isManifested()) {
             player.displayClientMessage(Component.translatable("message.thegods.manifest_first")
                     .withStyle(ChatFormatting.GRAY), true);
@@ -151,6 +156,7 @@ public final class GodManager {
     public static void tick(ServerPlayer player) {
         GodData data = data(player);
         God god = data.god();
+        if (player.tickCount % 20 == 0) LimbManager.refresh(player, data);
         if (god == null) {
             if (data.grantedFlight()) refreshForm(player, data);
             return;

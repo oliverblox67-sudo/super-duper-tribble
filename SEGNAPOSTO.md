@@ -10,12 +10,12 @@
 
 | | |
 |---|---|
-| **Versione** | 0.1.0, "Il Signore dei Mari" |
+| **Versione** | 0.2.0, "Costrutti degli Abissi" |
 | **Minecraft / Loader** | 1.21.1 / NeoForge 21.1.250 (compatibile con 21.1.x), Java 21 |
 | **Repository** | `oliverblox67-sudo/super-duper-tribble`, branch `claude/nice-cerf-6pwftr` |
 | **Mod id / package** | `thegods` / `com.thegods` |
-| **Dèi completati** | 🌊 Poseidone |
-| **Test** | `./gradlew runGameTestServer`: 3/3 passano (tutti i 7 poteri lanciati su un server vero) |
+| **Dèi completati** | 🌊 Poseidone (10 poteri + ultimate, Forgia del Corpo) |
+| **Test** | `./gradlew runGameTestServer`: 5/5 passano (tutti gli 11 poteri, Titano, Forgia del Corpo, Marea Eterna, revoca) |
 | **Verifica grafica** | `./gradlew runShowcase` (con Xvfb in cloud) salva gli screenshot di ogni potere |
 
 ### Regole del progetto (decise con l'utente)
@@ -42,12 +42,16 @@ src/main/java/com/thegods/
 │   ├── GodData.java              # attachment sul giocatore: dio, forma, energia, ricariche (+ campi animazione client)
 │   ├── GodManager.java           # TUTTA la logica server: grant/revoke, manifest, useAbility, tick, sync, titoli, scosse
 │   ├── Gods.java                 # REGISTRO del pantheon  <- qui si aggiunge ogni nuovo dio
+│   ├── Limb.java / LimbState.java# arti (braccia/gambe) e stato: CARNE / RECISO / COSTRUTTO
+│   ├── LimbManager.java          # Forgia del Corpo: recidi/forgia/rigenera, attributi per arto, camminata sull'acqua, pugni d'onda
 │   └── poseidon/
 │       ├── PoseidonGod.java      # definizione: 7 poteri, attributi, passivo Marea Eterna, tick della forma
 │       └── PoseidonPowers.java   # implementazione server dei poteri
 ├── entity/                       # "incantesimi" visibili (non salvati su disco)
 │   ├── SpellEntity.java          # base: proprietario, dimensione sincronizzata, durata
 │   ├── WaterTridentEntity / HydroBeamEntity / TsunamiEntity / MaelstromEntity / WaterPrisonEntity
+│   ├── WaterSpearEntity / TidalDomeEntity / LeviathanEntity (scia ricostruita sul client)
+│   └── WaterGolemEntity.java     # Titano degli Abissi: PathfinderMob vero (IA, proprietario, cavalcabile, schianto)
 ├── network/                      # payload: Manifest, UseAbility (C→S), SyncGodData, TitleCard, Shake (S→C)
 │                                 # ModNetwork.send(...) invia solo se il client ha la mod
 ├── command/GodsCommand.java      # /gods grant|revoke|refill|list|who
@@ -74,6 +78,11 @@ src/main/java/com/thegods/
 - I fulmini dei poteri sono **solo visivi** e il danno viene applicato a mano, quindi niente incendi e niente danno al lanciatore.
 - Le entità-incantesimo hanno `noSave()`: se il chunk si scarica spariscono senza lasciare residui.
 - Gli attributi divini sono `transient` e vengono riapplicati da `GodManager.refreshForm` (idempotente).
+- Arti: gli attributi hanno un id per arto e per stato (`LimbManager.MODIFIERS`). Lo stato vive in `GodData.limbs` e sopravvive al cambio di dio.
+  Gli arti non di carne vengono nascosti in `RenderPlayerEvent.Pre`; in prima persona `RenderArmEvent` disegna il costrutto.
+- La camminata sull'acqua gira in `PlayerTickEvent.Pre` su **client e server**, perché il movimento del giocatore lo calcola il client.
+- Il Titano: `getControllingPassenger` restituisce il proprietario, che lo guida (`tickRidden`/`getRiddenInput`). In groppa, `GodManager.useAbility` diventa `riderAttack`.
+- Demo grafica: `ShowcaseDirector` (solo con `-Dthegods.showcase=true`) crea un mondo piatto, prova tutto e salva gli screenshot.
 
 ### Come aggiungere un nuovo dio (ricetta)
 1. `god/<nome>/<Nome>God.java` estende `God`: colore, `abilities()` (6 poteri + 1 ultimate), `modifiers()`, passivo `tryEscapeDeath` o altri hook.
@@ -88,6 +97,8 @@ src/main/java/com/thegods/
 
 ## Roadmap (idee concordate / proposte)
 - [x] **0.1.0**: Sistema Divino + 🌊 **Poseidone**
+- [x] **0.2.0**: costrutti d'acqua (Titano cavalcabile, Leviatano, Lance, Cupola) + **Forgia del Corpo** (recidi e sostituisci gli arti)
+- [ ] Idee per la Forgia: trasformare il braccio d'acqua in **lama/frusta/cannone** con un tasto, arti di altri elementi per gli altri dèi
 - [ ] **0.2.0**: ⚡ **Zeus** (ali di fulmine, Giudizio dall'Olimpo, tempesta orbitale, catene di fulmini)
 - [ ] 💀 **Ade** (Signore dell'Oltretomba: anime, cani infernali, dimensione dell'Aldilà)
 - [ ] ☀️ **Ra** o 🌑 un dio inventato (Vuoto / Tempo / Stelle)

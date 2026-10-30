@@ -12,6 +12,7 @@ public final class ModKeys {
     public static final KeyMapping USE_POWER = key("use_power", GLFW.GLFW_KEY_R);
     public static final KeyMapping NEXT_POWER = key("next_power", GLFW.GLFW_KEY_V);
     public static final KeyMapping PREV_POWER = key("prev_power", GLFW.GLFW_KEY_B);
+    public static final KeyMapping BODY_FORGE = key("body_forge", GLFW.GLFW_KEY_H);
 
     private static KeyMapping key(String name, int code) {
         return new KeyMapping("key.thegods." + name, KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, code, CATEGORY);

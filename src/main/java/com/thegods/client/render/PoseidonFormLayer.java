@@ -30,6 +30,8 @@ public class PoseidonFormLayer extends RenderLayer<AbstractClientPlayer, PlayerM
     private static final int FOAM = 0xC8F6FF;
     private static final int CORE = 0x7FE8FF;
 
+    private float alphaMul = 1f;
+
     public PoseidonFormLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
         super(parent);
     }
@@ -45,6 +47,10 @@ public class PoseidonFormLayer extends RenderLayer<AbstractClientPlayer, PlayerM
         float ult = Mth.lerp(partialTick, data.clientUltimatePrev, data.clientUltimate);
         boolean airborne = player.getAbilities().flying || (!player.onGround() && !player.isInWater());
         float t = ageInTicks;
+
+        // In terza persona da dietro le tue stesse ali diventano più trasparenti per non coprirti la visuale
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        alphaMul = player == mc.player && mc.options.getCameraType() == net.minecraft.client.CameraType.THIRD_PERSON_BACK ? 0.5f : 1f;
 
         TextureAtlasSprite still = WaterRender.still();
 
@@ -120,7 +126,7 @@ public class PoseidonFormLayer extends RenderLayer<AbstractClientPlayer, PlayerM
             float w0 = Mth.lerp(i / 3f, 0.24f, 0.1f), w1 = Mth.lerp((i + 1) / 3f, 0.24f, 0.1f);
             if (water != null) {
                 WaterRender.solid(water, ps.last(), WaterRender.taper(lens[i] * 1.05f, w0, w0 * 0.8f, w1, w1 * 0.8f), s,
-                        WaterRender.argb(0.85f, WaterRender.lerpColor(ult * 0.4f, MID, FOAM)), WaterRender.FULL_BRIGHT);
+                        WaterRender.argb(0.85f * alphaMul, WaterRender.lerpColor(ult * 0.4f, MID, FOAM)), WaterRender.FULL_BRIGHT);
             }
             if (glow != null) {
                 WaterRender.glowSolid(glow, ps.last().pose(), WaterRender.taper(lens[i], w0 * 0.3f, w0 * 0.3f, w1 * 0.3f, w1 * 0.3f),
@@ -183,13 +189,13 @@ public class PoseidonFormLayer extends RenderLayer<AbstractClientPlayer, PlayerM
                 if (!covert && k == segs - 1) rgb = WaterRender.lerpColor(0.55f, MID, FOAM);
                 rgb = WaterRender.lerpColor(ult * 0.35f, rgb, FOAM);
                 WaterRender.solid(water, pose, WaterRender.taper(segLen * 1.04f, w0, t0, w1, t1), s,
-                        WaterRender.argb(covert ? 0.72f : 0.62f, rgb), WaterRender.FULL_BRIGHT);
+                        WaterRender.argb((covert ? 0.72f : 0.62f) * alphaMul, rgb), WaterRender.FULL_BRIGHT);
             }
             if (glow != null && !covert) {
                 float pulse = 0.5f + 0.5f * Mth.sin(t * 0.25f - k * 0.9f + index);
                 float alpha = (0.12f + 0.18f * pulse) * (1 + ult);
                 WaterRender.glowSolid(glow, pose.pose(), WaterRender.taper(segLen, w0 * 0.12f, t0 * 0.5f, w1 * 0.12f, t1 * 0.5f),
-                        WaterRender.argb(Math.min(1, alpha), CORE));
+                        WaterRender.argb(Math.min(1, alpha) * alphaMul, CORE));
             }
             ps.translate(segLen, 0, 0);
             float wave = Mth.sin(t * 0.15f - k * 0.8f + index * 0.4f) * (1.5f + k * 1.2f);

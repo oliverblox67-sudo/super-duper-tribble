@@ -156,6 +156,24 @@ public final class WaterRender {
         }
     }
 
+    /** Tronco di cono lungo +Z (raggio r0 a z=0, r1 a z=len). */
+    public static void frustum(VertexConsumer vc, PoseStack.Pose pose, float len, float r0, float r1, int sides,
+                               float twist, TextureAtlasSprite s, int argb, int light) {
+        for (int i = 0; i < sides; i++) {
+            float a0 = twist + Mth.TWO_PI * i / sides, a1 = twist + Mth.TWO_PI * (i + 1) / sides;
+            quad(vc, pose,
+                    new Vector3f(Mth.cos(a0) * r0, Mth.sin(a0) * r0, 0), new Vector3f(Mth.cos(a1) * r0, Mth.sin(a1) * r0, 0),
+                    new Vector3f(Mth.cos(a1) * r1, Mth.sin(a1) * r1, len), new Vector3f(Mth.cos(a0) * r1, Mth.sin(a0) * r1, len),
+                    s, (float) i / sides, 0, (float) (i + 1) / sides, 1, argb, light);
+        }
+    }
+
+    /** Orienta lo spazio locale così che +Z punti lungo {@code dir} (normalizzato). */
+    public static void orient(PoseStack ps, double dx, double dy, double dz) {
+        ps.mulPose(com.mojang.math.Axis.YP.rotation((float) Math.atan2(dx, dz)));
+        ps.mulPose(com.mojang.math.Axis.XP.rotation((float) -Math.asin(Mth.clamp(dy, -1, 1))));
+    }
+
     public static void glowTube(VertexConsumer vc, Matrix4f m, float z0, float z1, float radius, int sides, int argb) {
         for (int i = 0; i < sides; i++) {
             float a0 = Mth.TWO_PI * i / sides, a1 = Mth.TWO_PI * (i + 1) / sides;

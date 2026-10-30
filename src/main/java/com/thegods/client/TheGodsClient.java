@@ -4,6 +4,11 @@ import com.thegods.TheGods;
 import com.thegods.client.gui.GodHud;
 import com.thegods.client.gui.TitleCardOverlay;
 import com.thegods.client.render.HydroBeamRenderer;
+import com.thegods.client.render.LeviathanRenderer;
+import com.thegods.client.render.TidalDomeRenderer;
+import com.thegods.client.render.WaterGolemRenderer;
+import com.thegods.client.render.WaterSpearRenderer;
+import com.thegods.client.render.LimbConstructLayer;
 import com.thegods.client.render.MaelstromRenderer;
 import com.thegods.client.render.PoseidonFormLayer;
 import com.thegods.client.render.TsunamiRenderer;
@@ -40,12 +45,17 @@ public class TheGodsClient {
         event.registerEntityRenderer(ModEntities.TSUNAMI.get(), TsunamiRenderer::new);
         event.registerEntityRenderer(ModEntities.MAELSTROM.get(), MaelstromRenderer::new);
         event.registerEntityRenderer(ModEntities.WATER_PRISON.get(), WaterPrisonRenderer::new);
+        event.registerEntityRenderer(ModEntities.WATER_SPEAR.get(), WaterSpearRenderer::new);
+        event.registerEntityRenderer(ModEntities.TIDAL_DOME.get(), TidalDomeRenderer::new);
+        event.registerEntityRenderer(ModEntities.LEVIATHAN.get(), LeviathanRenderer::new);
+        event.registerEntityRenderer(ModEntities.WATER_GOLEM.get(), WaterGolemRenderer::new);
     }
 
     private static void addLayers(EntityRenderersEvent.AddLayers event) {
         for (PlayerSkin.Model skin : event.getSkins()) {
             if (event.getSkin(skin) instanceof PlayerRenderer renderer) {
                 renderer.addLayer(new PoseidonFormLayer(renderer));
+                renderer.addLayer(new LimbConstructLayer(renderer));
             }
         }
     }
@@ -55,6 +65,7 @@ public class TheGodsClient {
         event.register(ModKeys.USE_POWER);
         event.register(ModKeys.NEXT_POWER);
         event.register(ModKeys.PREV_POWER);
+        event.register(ModKeys.BODY_FORGE);
     }
 
     private static void registerGui(RegisterGuiLayersEvent event) {

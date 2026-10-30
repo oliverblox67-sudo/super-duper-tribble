@@ -4,11 +4,13 @@ import com.thegods.TheGods;
 import com.thegods.command.GodsCommand;
 import com.thegods.god.GodData;
 import com.thegods.god.GodManager;
+import com.thegods.god.LimbManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
@@ -30,9 +32,23 @@ public final class ServerEvents {
     }
 
     @SubscribeEvent
+    public static void onPlayerTickPre(PlayerTickEvent.Pre event) {
+        LimbManager.waterWalk(event.getEntity(), event.getEntity().getData(com.thegods.registry.ModAttachments.GOD_DATA));
+    }
+
+    @SubscribeEvent
+    public static void onDamageDealt(LivingDamageEvent.Post event) {
+        var src = event.getSource();
+        if (src.getEntity() instanceof ServerPlayer sp && src.getDirectEntity() == sp && src.is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)) {
+            LimbManager.onMeleeHit(sp, event.getEntity());
+        }
+    }
+
+    @SubscribeEvent
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
             GodManager.refreshForm(sp, GodManager.data(sp));
+            LimbManager.refresh(sp, GodManager.data(sp));
             GodManager.syncAll(sp);
         }
     }
@@ -45,6 +61,7 @@ public final class ServerEvents {
             data.setUltimateTicks(0);
             data.setGrantedFlight(false);
             GodManager.refreshForm(sp, data);
+            LimbManager.refresh(sp, data);
             GodManager.syncAll(sp);
         }
     }

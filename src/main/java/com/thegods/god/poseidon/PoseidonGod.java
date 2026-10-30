@@ -31,10 +31,14 @@ public class PoseidonGod extends God {
     private final List<Ability> abilities = List.of(
             new Ability("poseidon_trident", 30, 12, false, PoseidonPowers::tidalTrident),
             new Ability("poseidon_torrent", 160, 22, false, PoseidonPowers::abyssalTorrent),
+            new Ability("poseidon_spears", 200, 25, false, PoseidonPowers::waterSpears),
             new Ability("poseidon_tide_step", 50, 8, false, PoseidonPowers::tideStep),
             new Ability("poseidon_prison", 240, 20, false, PoseidonPowers::waterPrison),
+            new Ability("poseidon_dome", 400, 30, false, PoseidonPowers::tidalDome),
             new Ability("poseidon_maelstrom", 360, 35, false, PoseidonPowers::maelstrom),
             new Ability("poseidon_tsunami", 300, 40, false, PoseidonPowers::tsunami),
+            new Ability("poseidon_leviathan", 400, 45, false, PoseidonPowers::leviathan),
+            new Ability("poseidon_titan", 1200, 60, false, PoseidonPowers::titan),
             new Ability("poseidon_wrath", 1800, 100, true, PoseidonPowers::wrathOfTheSeas)
     );
 

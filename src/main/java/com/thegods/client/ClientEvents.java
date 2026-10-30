@@ -5,6 +5,10 @@ import com.thegods.client.gui.TitleCardOverlay;
 import com.thegods.god.God;
 import com.thegods.god.GodData;
 import com.thegods.god.Gods;
+import com.thegods.god.Limb;
+import com.thegods.god.LimbManager;
+import com.thegods.god.LimbState;
+import com.thegods.client.gui.BodyForgeScreen;
 import com.thegods.network.ManifestPayload;
 import com.thegods.network.UseAbilityPayload;
 import com.thegods.registry.ModAttachments;
@@ -41,6 +45,15 @@ public final class ClientEvents {
             d.clientForm = approach(d.clientForm, d.isManifested() ? 1 : 0, 1 / 22f);
             d.clientUltimate = approach(d.clientUltimate, d.isManifested() && d.ultimateTicks() > 0 ? 1 : 0, 1 / 15f);
             if (d.clientForm > 0.5f && d.is(Gods.POSEIDON)) poseidonAmbient(p, d);
+            for (Limb limb : Limb.ALL) {
+                int i = limb.ordinal();
+                d.clientLimbFormPrev[i] = d.clientLimbForm[i];
+                d.clientLimbForm[i] = d.limb(limb) == LimbState.CONSTRUCT ? Math.min(1, d.clientLimbForm[i] + 1 / 30f) : 0;
+                if (d.limb(limb) == LimbState.CONSTRUCT && p.getRandom().nextInt(25) == 0) {
+                    Vec3 at = LimbManager.limbPos(p, limb);
+                    p.level().addParticle(ParticleTypes.DRIPPING_WATER, at.x, at.y - 0.2, at.z, 0, 0, 0);
+                }
+            }
         }
 
         handleKeys(mc);
@@ -49,6 +62,9 @@ public final class ClientEvents {
     private static void handleKeys(Minecraft mc) {
         GodData data = mc.player.getData(ModAttachments.GOD_DATA);
         God god = data.god();
+        while (ModKeys.BODY_FORGE.consumeClick()) {
+            if (mc.screen == null) mc.setScreen(new BodyForgeScreen());
+        }
         while (ModKeys.MANIFEST.consumeClick()) {
             if (god != null) PacketDistributor.sendToServer(ManifestPayload.INSTANCE);
         }

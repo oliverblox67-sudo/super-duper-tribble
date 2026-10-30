@@ -2,6 +2,10 @@ package com.thegods.god.poseidon;
 
 import com.thegods.config.GodsConfig;
 import com.thegods.entity.HydroBeamEntity;
+import com.thegods.entity.LeviathanEntity;
+import com.thegods.entity.TidalDomeEntity;
+import com.thegods.entity.WaterGolemEntity;
+import com.thegods.entity.WaterSpearEntity;
 import com.thegods.entity.MaelstromEntity;
 import com.thegods.entity.TsunamiEntity;
 import com.thegods.entity.WaterPrisonEntity;
@@ -161,6 +165,91 @@ public final class PoseidonPowers {
         wave.setMaxHeight(height);
         level.addFreshEntity(wave);
         return wave;
+    }
+
+    // ================================================================ COSTRUTTI D'ACQUA
+
+    /** Pioggia di Lance: dieci lance d'acqua solida si formano alle tue spalle e partono una dopo l'altra. */
+    public static boolean waterSpears(ServerPlayer player, GodData data) {
+        ServerLevel level = player.serverLevel();
+        Vec3 eye = player.getEyePosition(), look = player.getLookAngle();
+        List<LivingEntity> targets = GodUtil.targetsIn(level, player, player.getBoundingBox().inflate(40)).stream()
+                .filter(e -> !(e instanceof WaterGolemEntity))
+                .filter(e -> e.getEyePosition().subtract(eye).normalize().dot(look) > 0.35)
+                .sorted(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(player)))
+                .toList();
+        int count = 10;
+        for (int i = 0; i < count; i++) {
+            double a = Math.toRadians(-80 + 160.0 * i / (count - 1));
+            Vec3 offset = new Vec3(Math.sin(a) * 2.6, 1.9 + Math.cos(a) * 1.5, -0.9);
+            WaterSpearEntity spear = new WaterSpearEntity(ModEntities.WATER_SPEAR.get(), level);
+            Vec3 pos = player.position().add(offset.yRot(-player.getYRot() * Mth.DEG_TO_RAD));
+            spear.setPos(pos.x, pos.y, pos.z);
+            spear.setOwner(player);
+            spear.setup(offset, 12 + i * 3, targets.isEmpty() ? null : targets.get(i % targets.size()));
+            level.addFreshEntity(spear);
+        }
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 2f, 0.6f);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.CONDUIT_ACTIVATE, SoundSource.PLAYERS, 1f, 1.8f);
+        return true;
+    }
+
+    /** Cupola delle Maree: una sfera d'acqua che riflette i proiettili e respinge i nemici. */
+    public static boolean tidalDome(ServerPlayer player, GodData data) {
+        ServerLevel level = player.serverLevel();
+        TidalDomeEntity dome = new TidalDomeEntity(ModEntities.TIDAL_DOME.get(), level);
+        dome.setPos(player.getX(), player.getY(), player.getZ());
+        dome.setOwner(player);
+        dome.setSize(5f);
+        level.addFreshEntity(dome);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.CONDUIT_ACTIVATE, SoundSource.PLAYERS, 2f, 0.7f);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_SPLASH_HIGH_SPEED, SoundSource.PLAYERS, 2f, 0.6f);
+        GodUtil.particleRing(level, ParticleTypes.SPLASH, player.position().add(0, 0.2, 0), 5, 64, 0.4);
+        return true;
+    }
+
+    /** Il Leviatano: un serpente marino d'acqua solida emerge dal terreno e caccia i nemici. */
+    public static boolean leviathan(ServerPlayer player, GodData data) {
+        ServerLevel level = player.serverLevel();
+        Vec3 dir = player.getLookAngle().multiply(1, 0, 1).normalize();
+        Vec3 at = player.position().add(dir.scale(4));
+        int ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(at.x), Mth.floor(at.z));
+        LeviathanEntity lev = new LeviathanEntity(ModEntities.LEVIATHAN.get(), level);
+        lev.setPos(at.x, Math.abs(ground - at.y) < 8 ? ground - 1 : at.y - 1, at.z);
+        lev.setOwner(player);
+        lev.launch(dir);
+        level.addFreshEntity(lev);
+        level.playSound(null, at.x, at.y, at.z, SoundEvents.ELDER_GUARDIAN_CURSE, SoundSource.PLAYERS, 2f, 0.4f);
+        level.playSound(null, at.x, at.y, at.z, SoundEvents.PLAYER_SPLASH_HIGH_SPEED, SoundSource.PLAYERS, 3f, 0.4f);
+        GodManager.shakeArea(level, at, 30, 0.7f, 20);
+        return true;
+    }
+
+    /** Il Titano degli Abissi: un golem d'acqua gigantesco che combatte per te (e che puoi cavalcare). */
+    public static boolean titan(ServerPlayer player, GodData data) {
+        ServerLevel level = player.serverLevel();
+        // un solo titano per evocatore
+        for (WaterGolemEntity old : level.getEntitiesOfClass(WaterGolemEntity.class, player.getBoundingBox().inflate(256), g -> g.isOwnedBy(player))) {
+            old.kill();
+        }
+        Vec3 dir = player.getLookAngle().multiply(1, 0, 1).normalize();
+        Vec3 at = player.position().add(dir.scale(4));
+        int ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(at.x), Mth.floor(at.z));
+        WaterGolemEntity golem = ModEntities.WATER_GOLEM.get().create(level);
+        if (golem == null) return false;
+        golem.moveTo(at.x, Math.abs(ground - at.y) < 8 ? ground : at.y, at.z, player.getYRot(), 0);
+        golem.setYHeadRot(player.getYRot());
+        golem.setYBodyRot(player.getYRot());
+        golem.setOwner(player);
+        level.addFreshEntity(golem);
+        level.sendParticles(ParticleTypes.SPLASH, at.x, golem.getY() + 0.5, at.z, 400, 2, 1, 2, 0.6);
+        for (int r = 1; r <= 3; r++) GodUtil.particleRing(level, ParticleTypes.SPLASH, golem.position().add(0, 0.3, 0), r * 1.5, 32, 0.6);
+        level.playSound(null, at.x, at.y, at.z, SoundEvents.ELDER_GUARDIAN_CURSE, SoundSource.PLAYERS, 2f, 0.3f);
+        level.playSound(null, at.x, at.y, at.z, SoundEvents.IRON_GOLEM_REPAIR, SoundSource.PLAYERS, 2f, 0.5f);
+        level.playSound(null, at.x, at.y, at.z, SoundEvents.PLAYER_SPLASH_HIGH_SPEED, SoundSource.PLAYERS, 3f, 0.3f);
+        GodManager.sendTitle(player, "title.thegods.poseidon_titan", "title.thegods.poseidon_titan.sub", PoseidonGod.COLOR);
+        GodManager.shakeArea(level, at, 40, 1.0f, 30);
+        return true;
     }
 
     /** ULTIMATE — L'Ira di Poseidone: tempesta, otto tsunami e fulmini sugli empi. */

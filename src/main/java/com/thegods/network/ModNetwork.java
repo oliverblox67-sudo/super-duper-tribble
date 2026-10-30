@@ -2,6 +2,8 @@ package com.thegods.network;
 
 import com.thegods.client.ClientPayloadHandler;
 import com.thegods.god.GodManager;
+import com.thegods.god.Limb;
+import com.thegods.god.LimbManager;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -18,6 +20,12 @@ public final class ModNetwork {
         }));
         r.playToServer(UseAbilityPayload.TYPE, UseAbilityPayload.CODEC, (p, ctx) -> ctx.enqueueWork(() -> {
             if (ctx.player() instanceof ServerPlayer sp) GodManager.useAbility(sp, p.index());
+        }));
+
+        r.playToServer(LimbActionPayload.TYPE, LimbActionPayload.CODEC, (p, ctx) -> ctx.enqueueWork(() -> {
+            if (!(ctx.player() instanceof ServerPlayer sp)) return;
+            if (p.limb() < 0 || p.limb() >= Limb.ALL.length || p.action() < 0 || p.action() >= LimbManager.Action.values().length) return;
+            LimbManager.perform(sp, Limb.ALL[p.limb()], LimbManager.Action.values()[p.action()]);
         }));
 
         // Server -> Client

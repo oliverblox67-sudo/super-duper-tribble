@@ -29,6 +29,7 @@ public class TheGods {
         ModItems.ITEMS.register(modBus);
         ModItems.TABS.register(modBus);
         modBus.addListener(ModNetwork::register);
+        modBus.addListener(ModEntities::registerAttributes);
         container.registerConfig(ModConfig.Type.COMMON, GodsConfig.SPEC);
         Gods.bootstrap();
     }

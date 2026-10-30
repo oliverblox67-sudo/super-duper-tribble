@@ -89,7 +89,9 @@ public final class GodHud {
 
         // suggerimenti tasti
         int hy = y + 24 + abilities.size() * ROW;
-        Component hint = active
+        boolean riding = mc.player.getVehicle() instanceof com.thegods.entity.WaterGolemEntity;
+        Component hint = riding ? Component.translatable("hud.thegods.riding", ModKeys.USE_POWER.getTranslatedKeyMessage())
+                : active
                 ? Component.translatable("hud.thegods.hint", ModKeys.USE_POWER.getTranslatedKeyMessage(),
                 ModKeys.PREV_POWER.getTranslatedKeyMessage(), ModKeys.NEXT_POWER.getTranslatedKeyMessage())
                 : Component.translatable("hud.thegods.manifest_hint", ModKeys.MANIFEST.getTranslatedKeyMessage());

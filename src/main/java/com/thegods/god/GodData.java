@@ -25,6 +25,13 @@ public class GodData implements INBTSerializable<CompoundTag> {
     /** True se il volo è stato concesso dalla forma divina (e va tolto alla fine). */
     private boolean grantedFlight;
 
+    /** Stato dei 4 arti (vedi {@link Limb}); sopravvive anche al cambio di divinità. */
+    private final byte[] limbs = new byte[Limb.ALL.length];
+
+    // Solo client: animazione di formazione dei costrutti (0..1 per arto)
+    public final float[] clientLimbForm = new float[Limb.ALL.length];
+    public final float[] clientLimbFormPrev = new float[Limb.ALL.length];
+
     // Solo client: animazione di comparsa della forma (0..1)
     public float clientForm, clientFormPrev;
     public float clientUltimate, clientUltimatePrev;
@@ -113,6 +120,20 @@ public class GodData implements INBTSerializable<CompoundTag> {
         this.grantedFlight = grantedFlight;
     }
 
+    public LimbState limb(Limb limb) {
+        return LimbState.of(limbs[limb.ordinal()]);
+    }
+
+    public void setLimb(Limb limb, LimbState state) {
+        limbs[limb.ordinal()] = (byte) state.ordinal();
+    }
+
+    public int count(LimbState state, boolean arms) {
+        int n = 0;
+        for (Limb l : Limb.ALL) if (l.isArm() == arms && limb(l) == state) n++;
+        return n;
+    }
+
     public CompoundTag write() {
         CompoundTag tag = new CompoundTag();
         tag.putString("god", godId);
@@ -124,6 +145,7 @@ public class GodData implements INBTSerializable<CompoundTag> {
         CompoundTag cds = new CompoundTag();
         cooldowns.forEach(cds::putInt);
         tag.put("cooldowns", cds);
+        tag.putByteArray("limbs", limbs.clone());
         return tag;
     }
 
@@ -137,6 +159,8 @@ public class GodData implements INBTSerializable<CompoundTag> {
         cooldowns.clear();
         CompoundTag cds = tag.getCompound("cooldowns");
         for (String key : cds.getAllKeys()) cooldowns.put(key, cds.getInt(key));
+        byte[] l = tag.getByteArray("limbs");
+        for (int i = 0; i < limbs.length; i++) limbs[i] = i < l.length ? l[i] : 0;
     }
 
     @Override

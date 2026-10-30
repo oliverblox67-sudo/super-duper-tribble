@@ -2,7 +2,11 @@ package com.thegods.client;
 
 import com.thegods.god.GodData;
 import com.thegods.god.GodManager;
+import com.thegods.client.gui.BodyForgeScreen;
+import com.thegods.entity.WaterGolemEntity;
 import com.thegods.god.Gods;
+import com.thegods.god.Limb;
+import com.thegods.god.LimbManager;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
@@ -48,7 +52,7 @@ public final class ShowcaseDirector {
             return;
         }
         if (mc.player == null || mc.getSingleplayerServer() == null) return;
-        if (mc.screen != null) mc.setScreen(null);
+        if (mc.screen != null && !(mc.screen instanceof BodyForgeScreen)) mc.setScreen(null);
         ticks++;
         switch (ticks) {
             case 40 -> server(mc, (level, p) -> {
@@ -65,45 +69,89 @@ public final class ShowcaseDirector {
             case 102 -> look(mc, 0, -5);
             case 104 -> mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
             case 120 -> shot(mc, "02_poseidon_front");
-            case 124 -> {
+            // --- Forgia del Corpo: braccio destro e gamba sinistra d'acqua
+            case 122 -> server(mc, (level, p) -> {
+                LimbManager.perform(p, Limb.RIGHT_ARM, LimbManager.Action.FORGE);
+                LimbManager.perform(p, Limb.LEFT_LEG, LimbManager.Action.FORGE);
+            });
+            case 160 -> shot(mc, "03_water_limbs");
+            case 162 -> mc.options.setCameraType(CameraType.FIRST_PERSON);
+            case 168 -> shot(mc, "04_first_person_arm");
+            case 170 -> {
                 mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
-                cast(mc, 5); // tsunami
+                BodyForgeScreen screen = new BodyForgeScreen();
+                mc.setScreen(screen);
+                screen.select(Limb.RIGHT_ARM);
             }
-            case 132 -> turn(mc, 55, 5);
-            case 140 -> shot(mc, "03_tsunami");
-            case 150 -> shot(mc, "04_tsunami_later");
-            case 196 -> look(mc, 0, 35);
-            case 200 -> cast(mc, 4); // maelstrom
-            case 236 -> turn(mc, 60, 15);
-            case 245 -> shot(mc, "05_maelstrom");
-            case 296 -> look(mc, 0, 0);
-            case 300 -> cast(mc, 0); // tridente
-            case 302 -> turn(mc, 25, 0);
-            case 304 -> shot(mc, "06_trident");
-            case 320 -> cast(mc, 1); // getto
-            case 326 -> turn(mc, 30, 0);
-            case 332 -> shot(mc, "07_torrent");
-            case 380 -> server(mc, (level, p) -> {
-                Mob z = EntityType.ZOMBIE.create(level);
-                if (z != null) {
-                    Vec3 at = p.position().add(p.getLookAngle().multiply(1, 0, 1).normalize().scale(6));
-                    z.moveTo(at.x, p.getY(), at.z, 180, 0);
-                    z.setNoAi(true);
-                    level.addFreshEntity(z);
+            case 180 -> shot(mc, "05_body_forge");
+            case 182 -> mc.setScreen(null);
+            // --- Pioggia di Lance
+            case 184 -> {
+                look(mc, 0, 0);
+                zombies(mc, 3, 14);
+            }
+            case 188 -> cast(mc, 2);
+            case 196 -> turn(mc, 25, 0);
+            case 200 -> shot(mc, "06_spears_forming");
+            case 216 -> shot(mc, "07_spears_flying");
+            // --- Leviatano
+            case 270 -> {
+                mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+                look(mc, 0, -10);
+                zombies(mc, 3, 18);
+            }
+            case 276 -> cast(mc, 8);
+            case 280 -> server(mc, (level, p) -> GodManager.toggleManifest(p)); // ali chiuse per vedere il Leviatano
+            case 300 -> turn(mc, 20, -15);
+            case 304 -> shot(mc, "09_leviathan");
+            case 322 -> shot(mc, "10_leviathan_late");
+            case 330 -> server(mc, (level, p) -> GodManager.toggleManifest(p));
+            // --- Titano
+            case 400 -> {
+                look(mc, 0, 0);
+                zombies(mc, 2, 12);
+            }
+            case 404 -> cast(mc, 9);
+            case 440 -> turn(mc, 40, 8);
+            case 446 -> shot(mc, "11_titan");
+            case 450 -> server(mc, (level, p) -> {
+                for (WaterGolemEntity g : level.getEntitiesOfClass(WaterGolemEntity.class, p.getBoundingBox().inflate(30))) {
+                    if (g.isOwnedBy(p)) p.startRiding(g, true);
                 }
             });
-            case 376 -> look(mc, 0, 8);
-            case 384 -> cast(mc, 3); // prigione
-            case 394 -> turn(mc, 40, 10);
-            case 400 -> shot(mc, "08_prison");
-            case 426 -> look(mc, 0, 0);
-            case 430 -> cast(mc, 6); // ira
-            case 446 -> shot(mc, "09_wrath");
-            case 452 -> mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
-            case 470 -> shot(mc, "10_wrath_front");
-            case 520 -> mc.stop();
+            case 460 -> look(mc, 0, 15);
+            case 470 -> server(mc, (level, p) -> GodManager.useAbility(p, 0)); // in groppa: comando del Titano
+            case 478 -> shot(mc, "12_titan_ride_slam");
+            case 500 -> server(mc, (level, p) -> p.stopRiding());
+            // --- Tsunami e Ira
+            case 520 -> look(mc, 0, -5);
+            case 524 -> cast(mc, 7);
+            case 532 -> turn(mc, 55, 5);
+            case 540 -> shot(mc, "13_tsunami");
+            case 580 -> look(mc, 0, 0);
+            case 584 -> cast(mc, 10);
+            case 600 -> shot(mc, "14_wrath");
+            case 630 -> cast(mc, 5);
+            case 634 -> mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+            case 646 -> shot(mc, "15_dome");
+            case 680 -> mc.stop();
             default -> {}
         }
+    }
+
+    private static void zombies(Minecraft mc, int count, double distance) {
+        server(mc, (level, p) -> {
+            Vec3 f = p.getLookAngle().multiply(1, 0, 1).normalize();
+            Vec3 side = new Vec3(-f.z, 0, f.x);
+            for (int i = 0; i < count; i++) {
+                Mob z = EntityType.ZOMBIE.create(level);
+                if (z == null) continue;
+                Vec3 at = p.position().add(f.scale(distance)).add(side.scale((i - (count - 1) / 2.0) * 3));
+                z.moveTo(at.x, p.getY(), at.z, 180, 0);
+                z.setNoAi(true);
+                level.addFreshEntity(z);
+            }
+        });
     }
 
     private static void look(Minecraft mc, float yaw, float pitch) {
