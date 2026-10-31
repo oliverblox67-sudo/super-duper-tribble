@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.0 — "Forme degli Abissi" (2026-10-31)
+Modelli 3D veri, come nella mod di riferimento (mesh + shader + fisica), e nuovi poteri.
+- **Pipeline 3D**: generatore di mesh (SDF + marching cubes + decimazione) in `tools/meshgen`, loader con ricarica (F3+T), skinning a ossa, **shader GLSL dell'acqua divina** (caustiche, Fresnel, scaglie, cristallo, membrane) con fallback vanilla e opzione nel config client.
+- **🌊 Avatar degli Abissi** (nuovo potere): diventi un titano d'acqua alto ~6 blocchi e lo guidi da dentro, **visibile nel suo petto**.
+  Il titano copia la tua posa. Formazione dai piedi alla testa, telecamera più vicina, pugni giganti in prima persona.
+  Mosse dedicate: Pugno di Marea, Schianto Abissale, Onda del Titano, Ruggito degli Abissi, Lascia l'Avatar. Atterraggi con onda d'urto.
+- **Leviatano 2.0**:
+  - aspetto: testa scolpita (cranio, mandibola animata, denti, corna, creste, occhi luminosi), corpo a spline lungo ~50 blocchi con scaglie e ventre chiaro, pinna dorsale continua, due paia di pinne pettorali, pinna caudale, barbigli con fisica;
+  - comportamento: emersione a spirale, caccia, **morso con presa e lancio**, **soffio d'acqua** dalle fauci, tuffo finale.
+- **Titano alleato** ridisegnato con la nuova mesh scolpita e l'armatura di cristallo.
+- **Ali 2.0**: 52 penne-mesh per ala (vessillo curvo + rachide), **fisica a molla** sulle penne.
+- **Mantello d'acqua** con **simulazione della stoffa** (Verlet, collisione col corpo).
+- Test automatici: 6/6 (nuovo test dell'Avatar). Demo grafica con scene brevi (`-Pscene=`).
+
 ## 0.2.0 — "Costrutti degli Abissi" (2026-10-30)
 Poteri di **acqua solida** e la **Forgia del Corpo**.
 - **Forgia del Corpo** (tasto **H**): interfaccia con anteprima 3D dal vivo e schema del corpo.

@@ -5,6 +5,9 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.thegods.god.GodData;
 import com.thegods.god.Gods;
+import com.thegods.client.mesh.GodMesh;
+import com.thegods.client.mesh.MeshDrawer;
+import com.thegods.client.mesh.MeshLibrary;
 import com.thegods.registry.ModAttachments;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -56,10 +59,10 @@ public class PoseidonFormLayer extends RenderLayer<AbstractClientPlayer, PlayerM
         TextureAtlasSprite still = WaterRender.still();
 
         // ---------- passaggio 1: acqua traslucida
-        VertexConsumer water = buffers.getBuffer(WaterRender.water());
         ps.pushPose();
         getParentModel().body.translateAndRotate(ps);
-        for (int side = -1; side <= 1; side += 2) wing(ps, water, null, still, side, form, ult, t, airborne);
+        for (int side = -1; side <= 1; side += 2) wing(ps, buffers, null, player, side, form, ult, t, partialTick, airborne);
+        VertexConsumer water = buffers.getBuffer(WaterRender.water());
         currents(ps, water, still, form, ult, t);
         ps.popPose();
 
@@ -70,10 +73,6 @@ public class PoseidonFormLayer extends RenderLayer<AbstractClientPlayer, PlayerM
 
         // ---------- passaggio 2: energia luminosa
         VertexConsumer glow = buffers.getBuffer(WaterRender.glow());
-        ps.pushPose();
-        getParentModel().body.translateAndRotate(ps);
-        for (int side = -1; side <= 1; side += 2) wing(ps, null, glow, still, side, form, ult, t, airborne);
-        ps.popPose();
 
         ps.pushPose();
         getParentModel().head.translateAndRotate(ps);
@@ -87,14 +86,16 @@ public class PoseidonFormLayer extends RenderLayer<AbstractClientPlayer, PlayerM
 
     /**
      * Un'ala costruita come quella di un uccello: un "braccio" d'acqua in 3 segmenti
-     * (omero, avambraccio, mano) da cui pendono le penne. Le remiganti si allungano
-     * verso la punta, le copritrici formano uno strato più chiaro sopra.
+     * (omero, avambraccio, mano) da cui pendono penne vere (mesh "feather": vessillo curvo
+     * + rachide di cristallo), animate dal battito, dalle onde e dalle molle di {@link WingPhysics}.
      */
-    private void wing(PoseStack ps, VertexConsumer water, VertexConsumer glow, TextureAtlasSprite s,
-                      int side, float form, float ult, float t, boolean airborne) {
+    private void wing(PoseStack ps, MultiBufferSource buffers, VertexConsumer glow, AbstractClientPlayer player,
+                      int side, float form, float ult, float t, float pt, boolean airborne) {
+        GodMesh feather = MeshLibrary.get("feather");
         float open = ease(form);
         float flap = Mth.sin(t * (airborne ? 0.2f : 0.075f));
         float beat = airborne ? 1f : 0.35f;
+        int wingIdx = side < 0 ? 0 : 1;
 
         ps.pushPose();
         ps.translate(side * 0.14f, 0.1f, 0.15f);
@@ -120,41 +121,79 @@ public class PoseidonFormLayer extends RenderLayer<AbstractClientPlayer, PlayerM
         }
         float total = lens[0] + lens[1] + lens[2];
 
+        VertexConsumer arm = buffers.getBuffer(GodRenderTypes.water(false));
         for (int i = 0; i < 3; i++) {
             ps.pushPose();
             ps.translate(pts[i][0], pts[i][1], 0);
             ps.mulPose(Axis.ZP.rotationDegrees(-angles[i]));
-            float w0 = Mth.lerp(i / 3f, 0.24f, 0.1f), w1 = Mth.lerp((i + 1) / 3f, 0.24f, 0.1f);
-            if (water != null) {
-                WaterRender.solid(water, ps.last(), WaterRender.taper(lens[i] * 1.05f, w0, w0 * 0.8f, w1, w1 * 0.8f), s,
-                        WaterRender.argb(0.85f * alphaMul, WaterRender.lerpColor(ult * 0.4f, MID, FOAM)), WaterRender.FULL_BRIGHT);
-            }
+            float r0 = Mth.lerp(i / 3f, 0.12f, 0.05f), r1 = Mth.lerp((i + 1) / 3f, 0.12f, 0.05f);
+            tube(arm, ps.last(), lens[i] * 1.06f, r0, r1, WaterRender.argb(0.85f * alphaMul, WaterRender.lerpColor(ult * 0.4f, MID, FOAM)));
             if (glow != null) {
-                WaterRender.glowSolid(glow, ps.last().pose(), WaterRender.taper(lens[i], w0 * 0.3f, w0 * 0.3f, w1 * 0.3f, w1 * 0.3f),
-                        WaterRender.argb(0.45f + 0.3f * ult, CORE));
+                WaterRender.glowSolid(glow, ps.last().pose(), WaterRender.taper(lens[i], r0 * 0.6f, r0 * 0.6f, r1 * 0.6f, r1 * 0.6f),
+                        WaterRender.argb((0.45f + 0.3f * ult) * alphaMul, CORE));
             }
             ps.popPose();
         }
+        if (feather == null) {
+            ps.popPose();
+            return;
+        }
 
         // --- remiganti: pendono dal braccio, più lunghe verso la punta
-        int primaries = 13;
+        int primaries = 14;
         for (int i = 0; i < primaries; i++) {
             float f = (i + 0.5f) / primaries;
             float[] at = along(pts, lens, total, 0.06f + f * 0.94f);
             float dir = Mth.lerp(open, -92f, Mth.lerp(f, -98f, -22f) + flap * 6f * beat * f);
-            float len = (1.25f + 1.75f * (float) Math.pow(f, 1.25)) * (f > 0.93f ? 0.9f : 1f) * (0.45f + 0.55f * open);
-            feather(ps, water, glow, s, at, dir, len, 0.44f, 0.1f, 0.06f, t, i, f, ult, 0.015f, false);
+            float len = (1.3f + 1.8f * (float) Math.pow(f, 1.25)) * (f > 0.93f ? 0.9f : 1f) * (0.45f + 0.55f * open);
+            float lag = WingPhysics.lag(player, wingIdx, i, pt);
+            float wave = Mth.sin(t * 0.15f + i * 0.45f) * 5f;
+            int base = WaterRender.lerpColor(ult * 0.35f, DEEP, MID);
+            featherMesh(ps, buffers, feather, at, dir + lag, len, 2.3f, 0.015f, wave, base, WaterRender.lerpColor(ult * 0.35f, MID, FOAM), 0.78f);
         }
-        // --- copritrici: strato superiore più corto e chiaro
-        int coverts = 10;
-        for (int i = 0; i < coverts; i++) {
-            float f = (i + 0.5f) / coverts;
-            float[] at = along(pts, lens, total, 0.04f + f * 0.86f);
-            float dir = Mth.lerp(open, -90f, Mth.lerp(f, -92f, -36f));
-            float len = (0.6f + 0.55f * f) * (0.5f + 0.5f * open);
-            feather(ps, water, glow, s, at, dir, len, 0.5f, 0.16f, 0.07f, t + 9, i + 30, f, ult, -0.035f, true);
+        // --- copritrici: due file, più corte e chiare
+        for (int row = 0; row < 2; row++) {
+            int coverts = row == 0 ? 11 : 8;
+            for (int i = 0; i < coverts; i++) {
+                float f = (i + 0.5f) / coverts;
+                float[] at = along(pts, lens, total, 0.04f + f * (row == 0 ? 0.86f : 0.7f));
+                float dir = Mth.lerp(open, -90f, Mth.lerp(f, -92f, -38f));
+                float len = (row == 0 ? 0.75f + 0.6f * f : 0.45f + 0.3f * f) * (0.5f + 0.5f * open);
+                float lag = WingPhysics.lag(player, wingIdx, primaries + i / 2, pt) * 0.6f;
+                featherMesh(ps, buffers, feather, at, dir + lag, len, row == 0 ? 2.6f : 2.9f, -0.03f - row * 0.03f,
+                        Mth.sin(t * 0.12f + i) * 3f, MID, FOAM, 0.85f);
+            }
         }
         ps.popPose();
+    }
+
+    /** Disegna una penna-mesh: vessillo membranoso + rachide di cristallo. */
+    private void featherMesh(PoseStack ps, MultiBufferSource buffers, GodMesh feather, float[] at, float dirDeg, float len,
+                             float width, float zOffset, float waveDeg, int colorBase, int colorTip, float alpha) {
+        ps.pushPose();
+        ps.translate(at[0], at[1], zOffset);
+        ps.mulPose(Axis.ZP.rotationDegrees(-dirDeg));
+        ps.mulPose(Axis.YP.rotationDegrees(waveDeg));
+        ps.scale(len, width, len * 0.8f);
+        float a = alpha * alphaMul;
+        MeshDrawer.Tint tint = (s0, s1, y) -> WaterRender.argb(a * (1 - 0.35f * s1), WaterRender.lerpColor(s0, colorBase, colorTip));
+        MeshDrawer.draw(ps, buffers, feather, feather.part("vane"), null, tint, WaterRender.FULL_BRIGHT, false);
+        MeshDrawer.draw(ps, buffers, feather, feather.part("rachis"), null, tint, WaterRender.FULL_BRIGHT, false);
+        ps.popPose();
+    }
+
+    /** Tubo liscio lungo +X (sezione circolare a 10 lati) con lo shader dell'acqua. */
+    private static void tube(VertexConsumer vc, PoseStack.Pose pose, float len, float r0, float r1, int argb) {
+        int sides = 10;
+        for (int k = 0; k < sides; k++) {
+            float a0 = Mth.TWO_PI * k / sides, a1 = Mth.TWO_PI * (k + 1) / sides;
+            float[][] q = {{0, r0, a0}, {0, r0, a1}, {len, r1, a1}, {len, r1, a0}};
+            for (float[] v : q) {
+                float cy = Mth.cos(v[2]), cz = Mth.sin(v[2]);
+                MeshDrawer.emit(vc, pose, v[0], cy * v[1], cz * v[1], argb, v[2] / Mth.TWO_PI, v[0], 0, cy, cz,
+                        WaterRender.FULL_BRIGHT, GodMesh.Material.WATER);
+            }
+        }
     }
 
     /** Punto del braccio alla frazione {@code s} della sua lunghezza. */
@@ -168,42 +207,6 @@ public class PoseidonFormLayer extends RenderLayer<AbstractClientPlayer, PlayerM
             d -= lens[i];
         }
         return pts[pts.length - 1];
-    }
-
-    /** Una penna d'acqua: 4 segmenti rastremati che ondeggiano come una corrente. */
-    private void feather(PoseStack ps, VertexConsumer water, VertexConsumer glow, TextureAtlasSprite s,
-                         float[] at, float dirDeg, float len, float wBase, float wTip, float thick,
-                         float t, int index, float f, float ult, float zOffset, boolean covert) {
-        ps.pushPose();
-        ps.translate(at[0], at[1], zOffset);
-        ps.mulPose(Axis.ZP.rotationDegrees(-dirDeg));
-        int segs = 4;
-        float segLen = len / segs;
-        for (int k = 0; k < segs; k++) {
-            float a0 = (float) k / segs, a1 = (float) (k + 1) / segs;
-            float w0 = Mth.lerp(a0, wBase, wTip), w1 = Mth.lerp(a1, wBase, wTip);
-            float t0 = thick * (1 - a0 * 0.5f), t1 = thick * (1 - a1 * 0.5f);
-            PoseStack.Pose pose = ps.last();
-            if (water != null) {
-                int rgb = covert ? WaterRender.lerpColor(0.3f + a0 * 0.5f, MID, FOAM)
-                        : WaterRender.lerpColor(a0 * 0.9f + f * 0.1f, DEEP, MID);
-                if (!covert && k == segs - 1) rgb = WaterRender.lerpColor(0.55f, MID, FOAM);
-                rgb = WaterRender.lerpColor(ult * 0.35f, rgb, FOAM);
-                WaterRender.solid(water, pose, WaterRender.taper(segLen * 1.04f, w0, t0, w1, t1), s,
-                        WaterRender.argb((covert ? 0.72f : 0.62f) * alphaMul, rgb), WaterRender.FULL_BRIGHT);
-            }
-            if (glow != null && !covert) {
-                float pulse = 0.5f + 0.5f * Mth.sin(t * 0.25f - k * 0.9f + index);
-                float alpha = (0.12f + 0.18f * pulse) * (1 + ult);
-                WaterRender.glowSolid(glow, pose.pose(), WaterRender.taper(segLen, w0 * 0.12f, t0 * 0.5f, w1 * 0.12f, t1 * 0.5f),
-                        WaterRender.argb(Math.min(1, alpha) * alphaMul, CORE));
-            }
-            ps.translate(segLen, 0, 0);
-            float wave = Mth.sin(t * 0.15f - k * 0.8f + index * 0.4f) * (1.5f + k * 1.2f);
-            ps.mulPose(Axis.ZP.rotationDegrees(wave * 0.5f + (covert ? 1f : 2f)));
-            ps.mulPose(Axis.YP.rotationDegrees(-wave * 0.6f));
-        }
-        ps.popPose();
     }
 
     // =============================================================== CORRENTI ATTORNO AL CORPO

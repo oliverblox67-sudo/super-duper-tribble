@@ -96,7 +96,7 @@ public final class ShowcaseDirector {
                 look(mc, 0, 0);
                 zombies(mc, 3, 14);
             }
-            case 188 -> cast(mc, 2);
+            case 188 -> cast(mc, ShowcaseScenes.indexOf("poseidon_spears"));
             case 196 -> turn(mc, 25, 0);
             case 200 -> shot(mc, "06_spears_forming");
             case 216 -> shot(mc, "07_spears_flying");
@@ -106,7 +106,7 @@ public final class ShowcaseDirector {
                 look(mc, 0, -10);
                 zombies(mc, 3, 18);
             }
-            case 276 -> cast(mc, 8);
+            case 276 -> cast(mc, ShowcaseScenes.indexOf("poseidon_leviathan"));
             case 280 -> server(mc, (level, p) -> GodManager.toggleManifest(p)); // ali chiuse per vedere il Leviatano
             case 300 -> turn(mc, 20, -15);
             case 304 -> shot(mc, "09_leviathan");
@@ -117,7 +117,7 @@ public final class ShowcaseDirector {
                 look(mc, 0, 0);
                 zombies(mc, 2, 12);
             }
-            case 404 -> cast(mc, 9);
+            case 404 -> cast(mc, ShowcaseScenes.indexOf("poseidon_titan"));
             case 440 -> turn(mc, 40, 8);
             case 446 -> shot(mc, "11_titan");
             case 450 -> server(mc, (level, p) -> {
@@ -131,13 +131,13 @@ public final class ShowcaseDirector {
             case 500 -> server(mc, (level, p) -> p.stopRiding());
             // --- Tsunami e Ira
             case 520 -> look(mc, 0, -5);
-            case 524 -> cast(mc, 7);
+            case 524 -> cast(mc, ShowcaseScenes.indexOf("poseidon_tsunami"));
             case 532 -> turn(mc, 55, 5);
             case 540 -> shot(mc, "13_tsunami");
             case 580 -> look(mc, 0, 0);
-            case 584 -> cast(mc, 10);
+            case 584 -> cast(mc, ShowcaseScenes.indexOf("poseidon_wrath"));
             case 600 -> shot(mc, "14_wrath");
-            case 630 -> cast(mc, 5);
+            case 630 -> cast(mc, ShowcaseScenes.indexOf("poseidon_dome"));
             case 634 -> mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
             case 646 -> shot(mc, "15_dome");
             case 680 -> mc.stop();

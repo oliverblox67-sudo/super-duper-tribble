@@ -61,6 +61,14 @@ public final class LimbRenderEvents {
     public static void onRenderPlayerPost(RenderPlayerEvent.Post event) {
         PlayerModel<AbstractClientPlayer> model = event.getRenderer().getModel();
         for (Limb limb : Limb.ALL) LimbConstructLayer.part(model, limb).visible = true;
+        // mantello d'acqua (simulazione stoffa) per Poseidone manifestato
+        if (event.getEntity() instanceof AbstractClientPlayer player && !player.isInvisible() && com.thegods.client.ClientConfig.WATER_CAPE.get()) {
+            GodData data = player.getData(ModAttachments.GOD_DATA);
+            if (data.is(com.thegods.god.Gods.POSEIDON) && data.clientAvatar < 0.1f) {
+                float form = net.minecraft.util.Mth.lerp(event.getPartialTick(), data.clientFormPrev, data.clientForm);
+                com.thegods.client.render.WaterCape.render(player, event.getPoseStack(), event.getMultiBufferSource(), event.getPartialTick(), form);
+            }
+        }
     }
 
     @SubscribeEvent

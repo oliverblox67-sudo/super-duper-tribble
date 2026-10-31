@@ -48,6 +48,11 @@ public final class ClientEvents {
             d.clientAvatar = approach(d.clientAvatar, d.avatarGrow(), 1 / 14f);
             if (d.clientAvatar > 0.6f && p.getRandom().nextInt(2) == 0) avatarAmbient(p);
             if (d.clientForm > 0.5f && d.is(Gods.POSEIDON)) poseidonAmbient(p, d);
+            if (d.clientForm > 0.01f && d.is(Gods.POSEIDON)) {
+                boolean airborne = p.getAbilities().flying || (!p.onGround() && !p.isInWater());
+                com.thegods.client.render.WingPhysics.tick(p, p.tickCount, airborne);
+                if (ClientConfig.WATER_CAPE.get() && d.clientAvatar < 0.1f) com.thegods.client.render.WaterCape.tick(p);
+            }
             for (Limb limb : Limb.ALL) {
                 int i = limb.ordinal();
                 d.clientLimbFormPrev[i] = d.clientLimbForm[i];
@@ -59,6 +64,10 @@ public final class ClientEvents {
             }
         }
 
+        if (mc.player.tickCount % 100 == 0) {
+            com.thegods.client.render.WingPhysics.cleanup(mc.player.tickCount);
+            com.thegods.client.render.WaterCape.cleanup(mc.player.tickCount);
+        }
         handleKeys(mc);
     }
 

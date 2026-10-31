@@ -13,3 +13,7 @@ bin/
 .DS_Store
 # Le build vere vanno in releases/
 !gradle/wrapper/gradle-wrapper.jar
+# ambiente Python per generare le mesh
+.meshenv/
+__pycache__/
+*.pyc
