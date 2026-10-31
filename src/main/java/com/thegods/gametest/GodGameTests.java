@@ -44,7 +44,7 @@ public class GodGameTests {
         return p;
     }
 
-    @GameTest(template = "empty", timeoutTicks = 420)
+    @GameTest(template = "empty", timeoutTicks = 460)
     public static void poseidonCastsEveryPower(GameTestHelper helper) {
         ServerPlayer p = god(helper);
         GodData data = GodManager.data(p);
@@ -62,6 +62,7 @@ public class GodGameTests {
                 data.setEnergy(100);
                 GodManager.useAbility(p, index);
                 Ability a = abilities.get(index);
+                if (a.id().equals("poseidon_avatar")) com.thegods.god.AvatarManager.end(p, data); // testato a parte
                 boolean needsTarget = a.id().equals("poseidon_prison") && !zombie.isAlive();
                 if (!needsTarget) {
                     helper.assertTrue(data.cooldown(a.id()) > 0, "Il potere " + a.id() + " non è stato lanciato");
@@ -91,6 +92,31 @@ public class GodGameTests {
             helper.assertTrue(golem.getControllingPassenger() == p, "Il proprietario deve guidare il Titano");
             GodManager.useAbility(p, 0); // in groppa: R comanda il Titano
             helper.assertTrue(golem.attackAnim > 0 || golem.slamAnim > 0, "Il Titano doveva attaccare su comando");
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 160)
+    public static void avatarGrowsFightsAndShrinks(GameTestHelper helper) {
+        ServerPlayer p = god(helper);
+        // il giocatore finto non viene "tickato" dal server: lo facciamo a mano
+        helper.onEachTick(() -> GodManager.tick(p));
+        GodManager.useAbility(p, indexOf("poseidon_avatar"));
+        helper.runAfterDelay(40, () -> {
+            GodData d = GodManager.data(p);
+            helper.assertTrue(d.isAvatar(), "L'Avatar doveva essere attivo");
+            helper.assertTrue(p.getScale() > 3.0f, "Il titano doveva essere gigante, scala = " + p.getScale());
+            helper.assertTrue(p.getAttributeValue(Attributes.ATTACK_DAMAGE) > 20, "Il titano colpisce fortissimo");
+            helper.assertTrue(Gods.POSEIDON.activeAbilities(d).get(0).id().equals("avatar_punch"), "Da Avatar si usano le mosse del titano");
+            GodManager.useAbility(p, 0);
+            helper.assertTrue(d.cooldown("avatar_punch") > 0, "Il Pugno di Marea doveva partire");
+            GodManager.useAbility(p, 4); // Lascia l'Avatar
+            helper.assertTrue(!d.isAvatar(), "Lasciando l'Avatar la trasformazione finisce");
+        });
+        helper.runAfterDelay(90, () -> {
+            GodData d = GodManager.data(p);
+            helper.assertTrue(d.avatarGrow() == 0, "Il titano doveva sciogliersi del tutto");
+            helper.assertTrue(p.getScale() < 1.5f, "Dovevi tornare normale, scala = " + p.getScale());
             helper.succeed();
         });
     }

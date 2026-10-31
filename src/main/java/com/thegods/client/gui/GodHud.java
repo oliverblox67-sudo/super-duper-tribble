@@ -29,7 +29,8 @@ public final class GodHud {
         if (god == null) return;
 
         Font font = mc.font;
-        List<Ability> abilities = god.abilities();
+        List<Ability> abilities = god.activeAbilities(data);
+        boolean avatar = data.isAvatar();
         int col = god.color() & 0xFFFFFF;
         int height = 26 + abilities.size() * ROW + 12;
         int x = 6;
@@ -41,7 +42,7 @@ public final class GodHud {
         g.fill(x - 3, y - 3, x - 2, y + height, 0xFF000000 | col);
 
         // nome + energia
-        Component name = god.displayName().copy().withStyle(ChatFormatting.BOLD);
+        Component name = (avatar ? Component.translatable("hud.thegods.avatar") : god.displayName()).copy().withStyle(ChatFormatting.BOLD);
         g.drawString(font, name, x + 1, y, 0xFF000000 | col, true);
         String energy = (int) data.energy() + "/" + (int) god.maxEnergy();
         g.drawString(font, energy, x + WIDTH - 4 - font.width(energy), y, 0xFFB8ECFF, true);
@@ -50,6 +51,10 @@ public final class GodHud {
         g.fill(bx - 1, by - 1, bx + bw + 1, by + 5, 0xFF02101C);
         int filled = (int) (bw * data.energy() / god.maxEnergy());
         g.fillGradient(bx, by, bx + filled, by + 4, 0xFF9FF0FF, 0xFF1E7FD8);
+        if (avatar) {
+            int left = (int) (bw * data.avatarTicks() / (float) com.thegods.god.AvatarManager.DURATION);
+            g.fill(bx, by + 5, bx + left, by + 6, 0xFFFFD86B);
+        }
         if (filled > 2) g.fill(bx + filled - 1, by, bx + filled, by + 4, 0xFFFFFFFF);
 
         // poteri

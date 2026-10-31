@@ -44,6 +44,9 @@ public final class ClientEvents {
             d.clientUltimatePrev = d.clientUltimate;
             d.clientForm = approach(d.clientForm, d.isManifested() ? 1 : 0, 1 / 22f);
             d.clientUltimate = approach(d.clientUltimate, d.isManifested() && d.ultimateTicks() > 0 ? 1 : 0, 1 / 15f);
+            d.clientAvatarPrev = d.clientAvatar;
+            d.clientAvatar = approach(d.clientAvatar, d.avatarGrow(), 1 / 14f);
+            if (d.clientAvatar > 0.6f && p.getRandom().nextInt(2) == 0) avatarAmbient(p);
             if (d.clientForm > 0.5f && d.is(Gods.POSEIDON)) poseidonAmbient(p, d);
             for (Limb limb : Limb.ALL) {
                 int i = limb.ordinal();
@@ -68,7 +71,12 @@ public final class ClientEvents {
         while (ModKeys.MANIFEST.consumeClick()) {
             if (god != null) PacketDistributor.sendToServer(ManifestPayload.INSTANCE);
         }
-        int count = god == null ? 0 : god.abilities().size();
+        boolean avatar = data.isAvatar();
+        if (avatar != ClientGodState.lastAvatar) {
+            ClientGodState.lastAvatar = avatar;
+            ClientGodState.selected = 0;
+        }
+        int count = god == null ? 0 : god.activeAbilities(data).size();
         if (count > 0) ClientGodState.selected = Mth.clamp(ClientGodState.selected, 0, count - 1);
         while (ModKeys.NEXT_POWER.consumeClick()) {
             if (count == 0) continue;
@@ -83,6 +91,16 @@ public final class ClientEvents {
         while (ModKeys.USE_POWER.consumeClick()) {
             if (count > 0) PacketDistributor.sendToServer(new UseAbilityPayload(ClientGodState.selected));
         }
+    }
+
+    /** Acqua che cola dal titano. */
+    private static void avatarAmbient(AbstractClientPlayer p) {
+        RandomSource r = p.getRandom();
+        double w = p.getBbWidth() * 0.9, h = p.getBbHeight();
+        p.level().addParticle(ParticleTypes.FALLING_WATER, p.getX() + (r.nextDouble() - 0.5) * w * 2, p.getY() + r.nextDouble() * h,
+                p.getZ() + (r.nextDouble() - 0.5) * w * 2, 0, 0, 0);
+        if (r.nextInt(3) == 0) p.level().addParticle(ParticleTypes.BUBBLE_POP, p.getX() + (r.nextDouble() - 0.5) * w,
+                p.getY() + h * 0.6, p.getZ() + (r.nextDouble() - 0.5) * w, 0, 0.05, 0);
     }
 
     /** Gocce che cadono dalle ali e bolle attorno a Poseidone. */
@@ -101,6 +119,15 @@ public final class ClientEvents {
         if (r.nextInt(4) == 0) {
             p.level().addParticle(ParticleTypes.BUBBLE_POP, p.getX() + r.nextGaussian() * 0.6, p.getY() + 1 + r.nextGaussian() * 0.6,
                     p.getZ() + r.nextGaussian() * 0.6, 0, 0.04, 0);
+        }
+    }
+
+    /** Da Avatar la telecamera in terza persona sta più vicina: si vede il pilota dentro il titano. */
+    @SubscribeEvent
+    public static void onCameraDistance(net.neoforged.neoforge.client.event.CalculateDetachedCameraDistanceEvent event) {
+        if (event.getCamera().getEntity() instanceof AbstractClientPlayer p) {
+            float grow = p.getData(ModAttachments.GOD_DATA).clientAvatar;
+            if (grow > 0) event.setDistance(event.getDistance() * Mth.lerp(grow, 1f, 0.62f));
         }
     }
 

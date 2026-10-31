@@ -39,7 +39,16 @@ public class PoseidonGod extends God {
             new Ability("poseidon_tsunami", 300, 40, false, PoseidonPowers::tsunami),
             new Ability("poseidon_leviathan", 400, 45, false, PoseidonPowers::leviathan),
             new Ability("poseidon_titan", 1200, 60, false, PoseidonPowers::titan),
+            new Ability("poseidon_avatar", 1800, 50, false, PoseidonAvatarMoves::become),
             new Ability("poseidon_wrath", 1800, 100, true, PoseidonPowers::wrathOfTheSeas)
+    );
+
+    private final List<Ability> avatarMoves = List.of(
+            new Ability("avatar_punch", 16, 4, false, PoseidonAvatarMoves::tidalPunch),
+            new Ability("avatar_slam", 100, 12, false, PoseidonAvatarMoves::abyssalSlam),
+            new Ability("avatar_wave", 140, 18, false, PoseidonAvatarMoves::titanWave),
+            new Ability("avatar_roar", 300, 20, false, PoseidonAvatarMoves::roar),
+            new Ability("avatar_exit", 0, 0, false, PoseidonAvatarMoves::leave)
     );
 
     private final List<DivineModifier> modifiers = List.of(
@@ -64,6 +73,11 @@ public class PoseidonGod extends God {
     @Override
     public List<Ability> abilities() {
         return abilities;
+    }
+
+    @Override
+    public List<Ability> avatarMoves() {
+        return avatarMoves;
     }
 
     @Override

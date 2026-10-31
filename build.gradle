@@ -31,6 +31,7 @@ neoForge {
             client()
             gameDirectory = project.file('run/showcase')
             systemProperty 'thegods.showcase', 'true'
+            systemProperty 'thegods.showcase.scene', (project.findProperty('scene') ?: 'all').toString()
             programArguments.addAll '--width', '1280', '--height', '720'
         }
         gameTestServer {

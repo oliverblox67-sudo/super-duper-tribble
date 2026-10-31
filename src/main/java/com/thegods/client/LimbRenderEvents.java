@@ -2,6 +2,7 @@ package com.thegods.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.thegods.TheGods;
+import com.thegods.client.render.AvatarRenderer;
 import com.thegods.client.render.LimbConstructLayer;
 import com.thegods.client.render.LimbConstructRender;
 import com.thegods.god.GodData;
@@ -25,6 +26,25 @@ import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 /** Nasconde gli arti recisi e disegna i costrutti anche in prima persona. */
 @EventBusSubscriber(modid = TheGods.MODID, value = Dist.CLIENT)
 public final class LimbRenderEvents {
+
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.HIGH)
+    public static void onRenderAvatar(RenderPlayerEvent.Pre event) {
+        if (event.getEntity() instanceof AbstractClientPlayer player
+                && AvatarRenderer.render(player, event.getRenderer(), event.getPoseStack(), event.getMultiBufferSource(),
+                event.getPackedLight(), event.getPartialTick())) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRenderHand(net.neoforged.neoforge.client.event.RenderHandEvent event) {
+        if (!(Minecraft.getInstance().player instanceof AbstractClientPlayer player)) return;
+        if (AvatarRenderer.grow(player, event.getPartialTick()) < 0.5f) return;
+        event.setCanceled(true);
+        if (event.getHand() == net.minecraft.world.InteractionHand.MAIN_HAND) {
+            AvatarRenderer.renderHands(player, event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), event.getPartialTick());
+        }
+    }
 
     @SubscribeEvent
     public static void onRenderPlayerPre(RenderPlayerEvent.Pre event) {

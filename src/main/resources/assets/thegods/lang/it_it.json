@@ -96,5 +96,20 @@
   "limb.thegods.effect.leg.severed": "-35% velocità e salto più basso.",
   "limb.thegods.effect.leg.construct.1": "+15% velocità, salto più alto, gradini più alti.",
   "limb.thegods.effect.leg.construct.2": "Le cadute fanno molto meno male.",
-  "limb.thegods.effect.legs.both": "≈ Cammini sull'acqua!"
+  "limb.thegods.effect.legs.both": "≈ Cammini sull'acqua!",
+  "ability.thegods.poseidon_avatar": "Avatar degli Abissi",
+  "ability.thegods.poseidon_avatar.desc": "Diventi il Titano: un colosso d'acqua alto 6 blocchi si forma attorno a te e lo guidi da dentro per 60 secondi.",
+  "ability.thegods.avatar_punch": "Pugno di Marea",
+  "ability.thegods.avatar_punch.desc": "Un pugno che scaglia un'onda d'urto a cono lunga 12 blocchi.",
+  "ability.thegods.avatar_slam": "Schianto Abissale",
+  "ability.thegods.avatar_slam.desc": "Un balzo enorme e un'esplosione d'acqua quando atterri.",
+  "ability.thegods.avatar_wave": "Onda del Titano",
+  "ability.thegods.avatar_wave.desc": "Una spazzata del braccio solleva uno tsunami.",
+  "ability.thegods.avatar_roar": "Ruggito degli Abissi",
+  "ability.thegods.avatar_roar.desc": "Respinge, rallenta e indebolisce tutti nel raggio di 18 blocchi.",
+  "ability.thegods.avatar_exit": "Lascia l'Avatar",
+  "ability.thegods.avatar_exit.desc": "Il titano si scioglie e torni alla tua forma.",
+  "title.thegods.avatar": "Avatar degli Abissi",
+  "title.thegods.avatar.sub": "Il mare si alza e prende la tua forma",
+  "hud.thegods.avatar": "AVATAR"
 }

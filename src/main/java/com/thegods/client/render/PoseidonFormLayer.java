@@ -42,6 +42,7 @@ public class PoseidonFormLayer extends RenderLayer<AbstractClientPlayer, PlayerM
                        float netHeadYaw, float headPitch) {
         GodData data = player.getData(ModAttachments.GOD_DATA);
         if (!data.is(Gods.POSEIDON) || player.isInvisible()) return;
+        if (Mth.lerp(partialTick, data.clientAvatarPrev, data.clientAvatar) > 0.15f) return; // le ali si fondono nel titano
         float form = Mth.lerp(partialTick, data.clientFormPrev, data.clientForm);
         if (form < 0.01f) return;
         float ult = Mth.lerp(partialTick, data.clientUltimatePrev, data.clientUltimate);

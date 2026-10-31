@@ -215,7 +215,7 @@ public final class PoseidonPowers {
         Vec3 at = player.position().add(dir.scale(4));
         int ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(at.x), Mth.floor(at.z));
         LeviathanEntity lev = new LeviathanEntity(ModEntities.LEVIATHAN.get(), level);
-        lev.setPos(at.x, Math.abs(ground - at.y) < 8 ? ground - 1 : at.y - 1, at.z);
+        lev.setPos(at.x, Math.abs(ground - at.y) < 8 ? ground - 2 : at.y - 2, at.z);
         lev.setOwner(player);
         lev.launch(dir);
         level.addFreshEntity(lev);

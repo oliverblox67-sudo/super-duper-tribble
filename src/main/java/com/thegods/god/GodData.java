@@ -24,6 +24,9 @@ public class GodData implements INBTSerializable<CompoundTag> {
     private int ultimateTicks;
     /** True se il volo è stato concesso dalla forma divina (e va tolto alla fine). */
     private boolean grantedFlight;
+    /** Avatar (trasformazione nel titano): tick rimanenti e crescita 0..1. */
+    private int avatarTicks;
+    private float avatarGrow;
 
     /** Stato dei 4 arti (vedi {@link Limb}); sopravvive anche al cambio di divinità. */
     private final byte[] limbs = new byte[Limb.ALL.length];
@@ -31,6 +34,9 @@ public class GodData implements INBTSerializable<CompoundTag> {
     // Solo client: animazione di formazione dei costrutti (0..1 per arto)
     public final float[] clientLimbForm = new float[Limb.ALL.length];
     public final float[] clientLimbFormPrev = new float[Limb.ALL.length];
+
+    // Solo client: crescita dell'avatar interpolata (0..1)
+    public float clientAvatar, clientAvatarPrev;
 
     // Solo client: animazione di comparsa della forma (0..1)
     public float clientForm, clientFormPrev;
@@ -55,6 +61,8 @@ public class GodData implements INBTSerializable<CompoundTag> {
         this.cooldowns.clear();
         this.ultimateTicks = 0;
         this.escapeCooldown = 0;
+        this.avatarTicks = 0;
+        this.avatarGrow = 0;
         this.energy = god == null ? 0 : god.maxEnergy();
     }
 
@@ -120,6 +128,26 @@ public class GodData implements INBTSerializable<CompoundTag> {
         this.grantedFlight = grantedFlight;
     }
 
+    public int avatarTicks() {
+        return avatarTicks;
+    }
+
+    public void setAvatarTicks(int ticks) {
+        this.avatarTicks = Math.max(0, ticks);
+    }
+
+    public boolean isAvatar() {
+        return avatarTicks > 0;
+    }
+
+    public float avatarGrow() {
+        return avatarGrow;
+    }
+
+    public void setAvatarGrow(float grow) {
+        this.avatarGrow = Mth.clamp(grow, 0, 1);
+    }
+
     public LimbState limb(Limb limb) {
         return LimbState.of(limbs[limb.ordinal()]);
     }
@@ -146,6 +174,8 @@ public class GodData implements INBTSerializable<CompoundTag> {
         cooldowns.forEach(cds::putInt);
         tag.put("cooldowns", cds);
         tag.putByteArray("limbs", limbs.clone());
+        tag.putInt("avatar", avatarTicks);
+        tag.putFloat("avatarGrow", avatarGrow);
         return tag;
     }
 
@@ -159,6 +189,8 @@ public class GodData implements INBTSerializable<CompoundTag> {
         cooldowns.clear();
         CompoundTag cds = tag.getCompound("cooldowns");
         for (String key : cds.getAllKeys()) cooldowns.put(key, cds.getInt(key));
+        avatarTicks = tag.getInt("avatar");
+        avatarGrow = tag.getFloat("avatarGrow");
         byte[] l = tag.getByteArray("limbs");
         for (int i = 0; i < limbs.length; i++) limbs[i] = i < l.length ? l[i] : 0;
     }

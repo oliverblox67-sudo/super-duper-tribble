@@ -96,5 +96,20 @@
   "limb.thegods.effect.leg.severed": "-35% speed and lower jumps.",
   "limb.thegods.effect.leg.construct.1": "+15% speed, higher jumps, higher steps.",
   "limb.thegods.effect.leg.construct.2": "Falls hurt much less.",
-  "limb.thegods.effect.legs.both": "≈ You walk on water!"
+  "limb.thegods.effect.legs.both": "≈ You walk on water!",
+  "ability.thegods.poseidon_avatar": "Avatar of the Deep",
+  "ability.thegods.poseidon_avatar.desc": "Become the Titan: a 6-block colossus of water forms around you and you pilot it from inside for 60 seconds.",
+  "ability.thegods.avatar_punch": "Tidal Punch",
+  "ability.thegods.avatar_punch.desc": "A punch that hurls a 12-block cone shockwave.",
+  "ability.thegods.avatar_slam": "Abyssal Slam",
+  "ability.thegods.avatar_slam.desc": "A huge leap and a water explosion when you land.",
+  "ability.thegods.avatar_wave": "Titan Wave",
+  "ability.thegods.avatar_wave.desc": "A sweep of the arm raises a tsunami.",
+  "ability.thegods.avatar_roar": "Roar of the Deep",
+  "ability.thegods.avatar_roar.desc": "Knocks back, slows and weakens everyone within 18 blocks.",
+  "ability.thegods.avatar_exit": "Leave the Avatar",
+  "ability.thegods.avatar_exit.desc": "The titan melts away and you return to your form.",
+  "title.thegods.avatar": "Avatar of the Deep",
+  "title.thegods.avatar.sub": "The sea rises and takes your shape",
+  "hud.thegods.avatar": "AVATAR"
 }

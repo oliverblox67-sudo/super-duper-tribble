@@ -38,6 +38,16 @@ public abstract class God {
 
     public abstract List<Ability> abilities();
 
+    /** Mosse disponibili quando il dio è trasformato nel suo Avatar (vuoto se non ne ha). */
+    public List<Ability> avatarMoves() {
+        return List.of();
+    }
+
+    /** I poteri attivi in questo momento: le mosse dell'Avatar se trasformato, altrimenti i poteri normali. */
+    public List<Ability> activeAbilities(GodData data) {
+        return data.isAvatar() && !avatarMoves().isEmpty() ? avatarMoves() : abilities();
+    }
+
     /** Energia rigenerata per tick. */
     public float energyRegen(ServerPlayer player) {
         return 0.3f;

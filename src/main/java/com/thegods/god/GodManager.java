@@ -68,6 +68,7 @@ public final class GodManager {
 
     private static void dismiss(ServerPlayer player, GodData data, boolean sync) {
         God god = data.god();
+        if (data.isAvatar()) AvatarManager.end(player, data);
         data.setManifested(false);
         data.setUltimateTicks(0);
         if (god != null) god.onDismiss(player, data);
@@ -93,7 +94,7 @@ public final class GodManager {
         }
         if (player.getHealth() > player.getMaxHealth()) player.setHealth(player.getMaxHealth());
 
-        boolean wantFlight = active && GodsConfig.DIVINE_FLIGHT.get();
+        boolean wantFlight = active && GodsConfig.DIVINE_FLIGHT.get() && data.avatarGrow() <= 0;
         var abilities = player.getAbilities();
         if (wantFlight && !abilities.mayfly) {
             abilities.mayfly = true;
@@ -127,7 +128,7 @@ public final class GodManager {
                     .withStyle(ChatFormatting.GRAY), true);
             return;
         }
-        List<Ability> abilities = god.abilities();
+        List<Ability> abilities = god.activeAbilities(data);
         if (index < 0 || index >= abilities.size()) return;
         Ability ability = abilities.get(index);
 
@@ -170,6 +171,7 @@ public final class GodManager {
             if (player.tickCount % 20 == 0) refreshForm(player, data);
             god.tickManifested(player, data);
         }
+        AvatarManager.tick(player, data);
         if (player.tickCount % 5 == 0) syncSelf(player);
     }
 

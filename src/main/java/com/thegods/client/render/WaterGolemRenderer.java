@@ -34,8 +34,50 @@ public class WaterGolemRenderer extends EntityRenderer<WaterGolemEntity> {
 
     private record Pose(float t, float walkPos, float walkSpeed, float punch, float slam, float alpha, int tint) {}
 
+    private com.thegods.client.mesh.Skeleton skeleton;
+
     @Override
     public void render(WaterGolemEntity e, float yaw, float pt, PoseStack ps, MultiBufferSource buffers, int light) {
+        com.thegods.client.mesh.GodMesh mesh = com.thegods.client.mesh.MeshLibrary.get("titan");
+        if (mesh == null) {
+            renderProcedural(e, yaw, pt, ps, buffers, light);
+            return;
+        }
+        if (skeleton == null) skeleton = new com.thegods.client.mesh.Skeleton(mesh);
+        float t = e.tickCount + pt;
+        float bodyYaw = Mth.rotLerp(pt, e.yBodyRotO, e.yBodyRot);
+        float headYaw = Mth.rotLerp(pt, e.yHeadRotO, e.yHeadRot) - bodyYaw;
+        float punch = e.attackAnim > 0 ? 1 - (e.attackAnim - pt) / 10f : -1;
+        float slam = e.slamAnim > 0 ? 1 - (e.slamAnim - pt) / 20f : -1;
+        float rise = e.emerge > 0 ? 1 - Mth.clamp((e.emerge - pt) / 30f, 0, 1) : 1;
+        float death = e.deathTime > 0 ? Mth.clamp((e.deathTime + pt) / 20f, 0, 1) : 0;
+        float walkPos = e.walkAnimation.position(pt), walkSpeed = Math.min(1, e.walkAnimation.speed(pt));
+        TitanPose.Input in = new TitanPose.Input(t, walkPos, walkSpeed, punch, slam, headYaw * Mth.DEG_TO_RAD,
+                Mth.lerp(pt, e.xRotO, e.getXRot()) * Mth.DEG_TO_RAD);
+        TitanPose.apply(skeleton.reset2(), in);
+        skeleton.compute();
+
+        ps.pushPose();
+        ps.mulPose(Axis.YP.rotationDegrees(-bodyYaw));
+        ps.translate(0, -(1 - rise * rise) * 6.5f, 0);
+        ps.scale(0.97f * (1 + death * 0.4f), 0.97f * (1 - death * 0.85f), 0.97f * (1 + death * 0.4f));
+        float alpha = 0.85f * (1 - death);
+        boolean hurt = e.hurtTime > 0;
+        com.thegods.client.mesh.MeshDrawer.drawAll(ps, buffers, mesh, skeleton, (s0, s1, y) -> {
+            int rgb = WaterRender.lerpColor(s0, DEEP, hurt ? FOAM : MID);
+            return WaterRender.argb(alpha, rgb);
+        }, light, true);
+        // cuore luminoso nel petto
+        float beat = 0.5f + 0.5f * Mth.sin(t * 0.25f);
+        VertexConsumer glow = buffers.getBuffer(WaterRender.glow());
+        float r = 0.3f + 0.06f * beat;
+        WaterRender.glowSolid(glow, ps.last().pose(), WaterRender.box(-r, 4.4f - r, 0.1f - r, r, 4.4f + r, 0.1f + r),
+                WaterRender.argb((0.55f + 0.3f * beat) * (1 - death), CORE));
+        ps.popPose();
+        super.render(e, yaw, pt, ps, buffers, light);
+    }
+
+    private void renderProcedural(WaterGolemEntity e, float yaw, float pt, PoseStack ps, MultiBufferSource buffers, int light) {
         float t = e.tickCount + pt;
         float bodyYaw = Mth.rotLerp(pt, e.yBodyRotO, e.yBodyRot);
         float punch = e.attackAnim > 0 ? 1 - (e.attackAnim - pt) / 10f : -1;

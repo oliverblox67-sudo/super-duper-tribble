@@ -34,6 +34,8 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class ShowcaseDirector {
     public static final boolean ENABLED = Boolean.getBoolean("thegods.showcase");
+    /** Scena da girare: "all" (tutto) oppure una scena breve: titan, avatar, leviathan, wings. */
+    private static final String SCENE = System.getProperty("thegods.showcase.scene", "all");
     private static int ticks, bootTicks;
     private static boolean worldRequested;
 
@@ -54,6 +56,10 @@ public final class ShowcaseDirector {
         if (mc.player == null || mc.getSingleplayerServer() == null) return;
         if (mc.screen != null && !(mc.screen instanceof BodyForgeScreen)) mc.setScreen(null);
         ticks++;
+        if (!SCENE.equals("all")) {
+            ShowcaseScenes.tick(mc, SCENE, ticks);
+            return;
+        }
         switch (ticks) {
             case 40 -> server(mc, (level, p) -> {
                 level.setDayTime(6000);
@@ -139,7 +145,7 @@ public final class ShowcaseDirector {
         }
     }
 
-    private static void zombies(Minecraft mc, int count, double distance) {
+    static void zombies(Minecraft mc, int count, double distance) {
         server(mc, (level, p) -> {
             Vec3 f = p.getLookAngle().multiply(1, 0, 1).normalize();
             Vec3 side = new Vec3(-f.z, 0, f.x);
@@ -154,20 +160,20 @@ public final class ShowcaseDirector {
         });
     }
 
-    private static void look(Minecraft mc, float yaw, float pitch) {
+    static void look(Minecraft mc, float yaw, float pitch) {
         if (mc.player == null) return;
         mc.player.setYRot(yaw);
         mc.player.setXRot(pitch);
     }
 
     /** Gira il giocatore di {@code yaw} gradi (solo client: la telecamera segue). */
-    private static void turn(Minecraft mc, float yaw, float pitch) {
+    static void turn(Minecraft mc, float yaw, float pitch) {
         if (mc.player == null) return;
         mc.player.setYRot(mc.player.getYRot() + yaw);
         mc.player.setXRot(pitch);
     }
 
-    private static void cast(Minecraft mc, int index) {
+    static void cast(Minecraft mc, int index) {
         server(mc, (level, p) -> {
             GodData d = GodManager.data(p);
             d.clearCooldowns();
@@ -176,11 +182,11 @@ public final class ShowcaseDirector {
         });
     }
 
-    private static void shot(Minecraft mc, String name) {
+    static void shot(Minecraft mc, String name) {
         Screenshot.grab(mc.gameDirectory, name + ".png", mc.getMainRenderTarget(), msg -> {});
     }
 
-    private static void server(Minecraft mc, java.util.function.BiConsumer<ServerLevel, ServerPlayer> action) {
+    static void server(Minecraft mc, java.util.function.BiConsumer<ServerLevel, ServerPlayer> action) {
         MinecraftServer server = mc.getSingleplayerServer();
         if (server == null || mc.player == null) return;
         var uuid = mc.player.getUUID();

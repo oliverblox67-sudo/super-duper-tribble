@@ -3,6 +3,7 @@ package com.thegods.event;
 import com.thegods.TheGods;
 import com.thegods.command.GodsCommand;
 import com.thegods.god.GodData;
+import com.thegods.god.AvatarManager;
 import com.thegods.god.GodManager;
 import com.thegods.god.LimbManager;
 import net.minecraft.server.level.ServerPlayer;
@@ -41,6 +42,7 @@ public final class ServerEvents {
         var src = event.getSource();
         if (src.getEntity() instanceof ServerPlayer sp && src.getDirectEntity() == sp && src.is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)) {
             LimbManager.onMeleeHit(sp, event.getEntity());
+            if (GodManager.data(sp).avatarGrow() > 0.5f) AvatarManager.onAvatarMelee(sp, event.getEntity());
         }
     }
 
@@ -49,6 +51,7 @@ public final class ServerEvents {
         if (event.getEntity() instanceof ServerPlayer sp) {
             GodManager.refreshForm(sp, GodManager.data(sp));
             LimbManager.refresh(sp, GodManager.data(sp));
+            AvatarManager.apply(sp, GodManager.data(sp).avatarGrow());
             GodManager.syncAll(sp);
         }
     }
@@ -60,6 +63,9 @@ public final class ServerEvents {
             data.setManifested(false);
             data.setUltimateTicks(0);
             data.setGrantedFlight(false);
+            data.setAvatarTicks(0);
+            data.setAvatarGrow(0);
+            AvatarManager.apply(sp, 0);
             GodManager.refreshForm(sp, data);
             LimbManager.refresh(sp, data);
             GodManager.syncAll(sp);
@@ -83,9 +89,10 @@ public final class ServerEvents {
 
     @SubscribeEvent
     public static void onFall(LivingFallEvent event) {
-        if (event.getEntity() instanceof ServerPlayer sp && GodManager.data(sp).isManifested()) {
-            event.setCanceled(true);
-        }
+        if (!(event.getEntity() instanceof ServerPlayer sp)) return;
+        GodData data = GodManager.data(sp);
+        if (data.avatarGrow() > 0.5f) AvatarManager.onLanding(sp, event.getDistance());
+        if (data.isManifested()) event.setCanceled(true);
     }
 
     @SubscribeEvent
@@ -94,6 +101,10 @@ public final class ServerEvents {
         if (event.getEntity() instanceof ServerPlayer sp && GodManager.data(sp).isManifested()) {
             var src = event.getSource();
             if (src.is(DamageTypeTags.IS_LIGHTNING) || src.is(DamageTypeTags.IS_DROWNING)) {
+                event.setCanceled(true);
+            }
+            // l'Avatar cresce anche dentro i blocchi: niente soffocamento
+            if (GodManager.data(sp).avatarGrow() > 0 && src.is(net.minecraft.world.damagesource.DamageTypes.IN_WALL)) {
                 event.setCanceled(true);
             }
         }

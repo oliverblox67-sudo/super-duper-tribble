@@ -3,6 +3,8 @@ package com.thegods.client;
 import com.thegods.TheGods;
 import com.thegods.client.gui.GodHud;
 import com.thegods.client.gui.TitleCardOverlay;
+import com.thegods.client.mesh.MeshLibrary;
+import com.thegods.client.render.GodRenderTypes;
 import com.thegods.client.render.HydroBeamRenderer;
 import com.thegods.client.render.LeviathanRenderer;
 import com.thegods.client.render.TidalDomeRenderer;
@@ -33,6 +35,9 @@ import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 public class TheGodsClient {
     public TheGodsClient(IEventBus modBus, ModContainer container) {
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, ClientConfig.SPEC);
+        modBus.addListener(GodRenderTypes::registerShaders);
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent e) -> e.registerReloadListener(MeshLibrary.INSTANCE));
         modBus.addListener(TheGodsClient::registerRenderers);
         modBus.addListener(TheGodsClient::addLayers);
         modBus.addListener(TheGodsClient::registerKeys);
